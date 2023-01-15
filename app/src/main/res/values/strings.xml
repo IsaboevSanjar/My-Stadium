@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MyStadium</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="api_key">AIzaSyAEFnigx8aFSYDotNjICPt_gjwqqGRrgdE</string>
+</resources>
