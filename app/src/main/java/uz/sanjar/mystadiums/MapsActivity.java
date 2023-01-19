@@ -1,6 +1,7 @@
 package uz.sanjar.mystadiums;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -8,6 +9,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
@@ -16,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -31,6 +34,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +42,7 @@ import java.util.List;
 
 import uz.sanjar.mystadiums.databinding.ActivityMapsBinding;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener {
 
     private static final String TAG = "MapsActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
@@ -61,6 +65,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //vars
     private Boolean mLocationPermissionGranted = false;
     private FusedLocationProviderClient mFusedLocationProviderClient;
+
+    private Address address1;
+    private String addressLine;
+    private String countryName;
+    private String adminArea;
+    private String subAdminArea;
+    private String locality;
+    private String countryCode;
+    private String latLng;
+
+    //private BottomSheetFragment dialog=new BottomSheetFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +105,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show());
     }
 
+    @SuppressLint("SetTextI18n")
     private void geoLocate() {
         String searchString = binding.searchEdt.getText().toString();
         Geocoder geocoder = new Geocoder(this);
@@ -100,21 +116,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.e(TAG, "geoLocate: IOException" + e.getMessage());
         }
         if (list.size() > 0) {
-            mMap.clear();
-            binding.layInfo.setVisibility(View.VISIBLE);
             Address address = list.get(0);
-            //Toast.makeText(this, address.toString(), Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "geoLocate: " + address.getAddressLine(0));
-            binding.info.setText(address.getAddressLine(0));
-            binding.info.append("\nCounty Name: " + address.getCountryName());
-            binding.info.append("\nAdmin area: " + address.getAdminArea());
-            binding.info.append("\nSub-admin area" + address.getSubAdminArea());
-            binding.info.append("\nLocality:" + address.getLocality());
-            binding.info.append("\nCountry code: " + address.getCountryCode());
-            binding.info.append("\nLat / Lng: " + address.getLatitude() + " / " + address.getLongitude());
-            //binding.info.append("\n"+address);
-            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), 11.8f, address.getAddressLine(0));
+            address1 = list.get(0);
+            addressLine = address.getAddressLine(0);
+            countryName = address.getCountryName();
+            adminArea = address.getAdminArea();
+            subAdminArea = address.getSubAdminArea();
+            locality = address.getLocality();
+            countryCode = address.getCountryCode();
+            latLng = address.getLatitude() + " / " + address.getLongitude();
+           /* for(Fragment fragment: this.getSupportFragmentManager().getFragments()){
+                if(fragment instanceof BottomSheetDialogFragment)
+                    return;
+            }
+            BottomFragment bottomSheetFragment=new BottomFragment();
+            Bundle args=new Bundle();
+            args.putString("getAddressLine",address.getAddressLine(0));
+            args.putString("getCountryName",address.getCountryName());
+            args.putString("getAdminArea",address.getAdminArea());
+            args.putString("getSubAdminArea",address.getSubAdminArea());
+            args.putString("getLocality",address.getLocality());
+            args.putString("getCountryCode",address.getCountryCode());
+            args.putString("getLatLng",address.getLatitude() +" / "+address.getLongitude());
+            bottomSheetFragment.setArguments(args);
+            bottomSheetFragment.show(getSupportFragmentManager(),bottomSheetFragment.getTag());*/
 
+            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), 11.8f, address.getAddressLine(0));
+            MarkerOptions options = new MarkerOptions().position(new LatLng(address.getLatitude(), address.getLongitude()))
+                    .title(address.getAddressLine(0))
+                    .snippet(address.getAdminArea() + "  " + address.getSubAdminArea() + "  " + address.getLocality() + "  " + address.getCountryCode());
+            mMap.addMarker(options);
         }
     }
 
@@ -226,8 +257,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
             mMap.getUiSettings().isCompassEnabled();
             mMap.setOnMarkerClickListener(this);
+            mMap.setOnInfoWindowClickListener(this);
         }
     }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        closeDialog();
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private void closeDialog() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            /*binding.dialogShow.getAnimation();
+            binding.dialogShow.setVisibility(View.GONE);*/
+        }
+    }
+
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
@@ -240,4 +287,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return false;
     }
 
+    @Override
+    public void onInfoWindowClick(@NonNull Marker marker) {
+
+        for (Fragment fragment : this.getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof BottomSheetDialogFragment)
+                return;
+        }
+        BottomFragment bottomSheetFragment = new BottomFragment();
+        Bundle args = new Bundle();
+        args.putString("getAddressLine", addressLine);
+        args.putString("getCountryName", countryName);
+        args.putString("getAdminArea", adminArea);
+        args.putString("getSubAdminArea", subAdminArea);
+        args.putString("getLocality", locality);
+        args.putString("getCountryCode", countryCode);
+        args.putString("getLatLng", latLng);
+        bottomSheetFragment.setArguments(args);
+        bottomSheetFragment.show(getSupportFragmentManager(), bottomSheetFragment.getTag());
+    }
 }

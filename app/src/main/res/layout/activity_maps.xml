@@ -77,25 +77,4 @@
         android:src="@drawable/ic_current_location"
         map:layout_constraintBottom_toBottomOf="parent"
         map:layout_constraintEnd_toEndOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/lay_info"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_margin="50dp"
-        android:background="@color/white"
-        android:elevation="100dp"
-        android:visibility="gone"
-        map:layout_constraintBottom_toBottomOf="parent"
-        map:layout_constraintEnd_toEndOf="parent"
-        map:layout_constraintStart_toStartOf="parent">
-
-        <TextView
-            android:id="@+id/info"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="10dp"
-            android:textColor="#000"
-            android:textSize="17sp" />
-    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
