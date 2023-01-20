@@ -162,7 +162,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             Log.d(TAG, "onComplete: found location!");
                             Location currentLocation = (Location) task.getResult();
                             // We are moving the camera to 11.8f zoom
-                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 11.8f, "You are here!");
+                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 17f, "You are here!");
                         } else {
                             Toast.makeText(MapsActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
                         }
@@ -246,7 +246,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         if (mLocationPermissionGranted) {
-            getDeviceLocation();
+            //getDeviceLocation();
+            moveCamera(new LatLng(41.312211, 69.243240), 11.8f, "Tashkent");
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -283,7 +284,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(@NonNull Marker marker) {
-        //Toast.makeText(this, marker.getSnippet(), Toast.LENGTH_SHORT).show();
+        moveCamera(marker.getPosition(), 17f, marker.getTitle());
         return false;
     }
 
