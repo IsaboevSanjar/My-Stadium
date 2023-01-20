@@ -10,6 +10,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -239,24 +241,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         mMap = googleMap;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (mLocationPermissionGranted) {
-                moveCamera(new LatLng(41.312211, 69.243240), 11.8f, "Tashkent");
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                                != PackageManager.PERMISSION_GRANTED) {
-                    return;
-                } else {
-                    Toast.makeText(this, "Error onMapReady Class", Toast.LENGTH_SHORT).show();
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 2);
-                }
-                mMap.setMyLocationEnabled(true);
-                mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                mMap.getUiSettings().isCompassEnabled();
-                mMap.setOnMarkerClickListener(this);
-                mMap.setOnInfoWindowClickListener(this);
+
+        if (mLocationPermissionGranted) {
+            //getDeviceLocation();
+            moveCamera(new LatLng(41.312211, 69.243240), 11.8f, "Tashkent");
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED) {
+                return;
             }
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            mMap.getUiSettings().isCompassEnabled();
+            mMap.setOnMarkerClickListener(this);
+            mMap.setOnInfoWindowClickListener(this);
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        closeDialog();
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private void closeDialog() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            /*binding.dialogShow.getAnimation();
+            binding.dialogShow.setVisibility(View.GONE);*/
         }
     }
     @Override
@@ -266,7 +279,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(@NonNull Marker marker) {
-        moveCamera(marker.getPosition(), 17f, "Marker");
+        moveCamera(marker.getPosition(), 17f, marker.getTitle());
         return false;
     }
 
