@@ -82,8 +82,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        defaultTashkent();
         getLocationPermission();
         onClickListeners();
+    }
+
+    private void defaultTashkent() {
+
     }
 
     //This fun is for clicking the items on the activity
@@ -102,7 +107,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding.currentLocation.setOnClickListener(view ->
                 getDeviceLocation());
         binding.circleProfile.setOnClickListener(view ->
-                Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show());
+                binding.drawerLayout.open());
+        //setActionBar(binding.toolBar);
+
+        /*ActionBarDrawerToggle toggle=new ActionBarDrawerToggle(this,binding.drawerLayout,binding.toolBar,R.string.navigation_drawer_open,R.string.navigation_drawer_close);
+        binding.drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();*/
     }
 
     @SuppressLint("SetTextI18n")
@@ -246,7 +256,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         if (mLocationPermissionGranted) {
-            getDeviceLocation();
+            //getDeviceLocation();
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
