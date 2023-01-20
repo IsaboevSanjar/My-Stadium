@@ -6,11 +6,10 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -82,6 +81,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
         defaultTashkent();
         getLocationPermission();
         onClickListeners();
@@ -135,21 +135,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             locality = address.getLocality();
             countryCode = address.getCountryCode();
             latLng = address.getLatitude() + " / " + address.getLongitude();
-           /* for(Fragment fragment: this.getSupportFragmentManager().getFragments()){
-                if(fragment instanceof BottomSheetDialogFragment)
-                    return;
-            }
-            BottomFragment bottomSheetFragment=new BottomFragment();
-            Bundle args=new Bundle();
-            args.putString("getAddressLine",address.getAddressLine(0));
-            args.putString("getCountryName",address.getCountryName());
-            args.putString("getAdminArea",address.getAdminArea());
-            args.putString("getSubAdminArea",address.getSubAdminArea());
-            args.putString("getLocality",address.getLocality());
-            args.putString("getCountryCode",address.getCountryCode());
-            args.putString("getLatLng",address.getLatitude() +" / "+address.getLongitude());
-            bottomSheetFragment.setArguments(args);
-            bottomSheetFragment.show(getSupportFragmentManager(),bottomSheetFragment.getTag());*/
 
             moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), 11.8f, address.getAddressLine(0));
             MarkerOptions options = new MarkerOptions().position(new LatLng(address.getLatitude(), address.getLongitude()))
@@ -172,7 +157,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             Log.d(TAG, "onComplete: found location!");
                             Location currentLocation = (Location) task.getResult();
                             // We are moving the camera to 11.8f zoom
-                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 11.8f, "You are here!");
+                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 17f, "You are here!");
                         } else {
                             Toast.makeText(MapsActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
                         }
@@ -254,38 +239,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         mMap = googleMap;
-
-        if (mLocationPermissionGranted) {
-            //getDeviceLocation();
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                            != PackageManager.PERMISSION_GRANTED) {
-                return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (mLocationPermissionGranted) {
+                moveCamera(new LatLng(41.312211, 69.243240), 11.8f, "Tashkent");
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                                != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                } else {
+                    Toast.makeText(this, "Error onMapReady Class", Toast.LENGTH_SHORT).show();
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 2);
+                }
+                mMap.setMyLocationEnabled(true);
+                mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                mMap.getUiSettings().isCompassEnabled();
+                mMap.setOnMarkerClickListener(this);
+                mMap.setOnInfoWindowClickListener(this);
             }
-            mMap.setMyLocationEnabled(true);
-            mMap.getUiSettings().setMyLocationButtonEnabled(false);
-            mMap.getUiSettings().isCompassEnabled();
-            mMap.setOnMarkerClickListener(this);
-            mMap.setOnInfoWindowClickListener(this);
         }
     }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        closeDialog();
-        return super.dispatchTouchEvent(ev);
-    }
-
-    private void closeDialog() {
-        View view = this.getCurrentFocus();
-        if (view != null) {
-            /*binding.dialogShow.getAnimation();
-            binding.dialogShow.setVisibility(View.GONE);*/
-        }
-    }
-
-
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
@@ -293,7 +266,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(@NonNull Marker marker) {
-        //Toast.makeText(this, marker.getSnippet(), Toast.LENGTH_SHORT).show();
+        moveCamera(marker.getPosition(), 17f, "Marker");
         return false;
     }
 
