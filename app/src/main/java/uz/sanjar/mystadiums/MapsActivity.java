@@ -115,7 +115,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding.currentLocation.setOnClickListener(view ->
                 turnOnGPS());
         binding.circleProfile.setOnClickListener(view ->
-                Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show());
+                binding.drawerLayout.open());
     }
 
     @SuppressLint("SetTextI18n")
@@ -310,6 +310,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 try {
                     LocationSettingsResponse response = task.getResult(ApiException.class);
                     //Toast.makeText(MapsActivity.this, "GPS is already tured on", Toast.LENGTH_SHORT).show();
+                    getDeviceLocation();
 
                 } catch (ApiException e) {
 
@@ -319,7 +320,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             try {
                                 ResolvableApiException resolvableApiException = (ResolvableApiException) e;
                                 resolvableApiException.startResolutionForResult(MapsActivity.this, 2);
-                                getDeviceLocation();
+                                //getDeviceLocation();
                             } catch (IntentSender.SendIntentException ex) {
                                 ex.printStackTrace();
                             }
