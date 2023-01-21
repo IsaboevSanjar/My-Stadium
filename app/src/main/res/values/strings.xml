@@ -2,4 +2,6 @@
     <string name="app_name">MyStadium</string>
     <string name="title_activity_maps">MapsActivity</string>
     <string name="api_key">AIzaSyAEFnigx8aFSYDotNjICPt_gjwqqGRrgdE</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>
