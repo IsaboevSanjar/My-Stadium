@@ -1,13 +1,16 @@
 package uz.sanjar.mystadiums;
 
+
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
@@ -16,7 +19,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -25,7 +27,9 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
@@ -47,7 +51,7 @@ import java.util.List;
 
 import uz.sanjar.mystadiums.databinding.ActivityMapsBinding;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener {
+public class JustEx extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener {
 
     private static final String TAG = "MapsActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
@@ -89,14 +93,98 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
+        onClickListeners();
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(5000);
         locationRequest.setFastestInterval(2000);
+    }
 
-        getLocationPermission();
-        onClickListeners();
+    private void checkLocationPermission() {
+        String[] permission = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+
+        if (ActivityCompat.checkSelfPermission(this.getApplicationContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this.getApplicationContext(),
+                    Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                //This is for if the user permitted for currentLocation
+                if (isGPSEnabled()) {
+                    LocationServices.getFusedLocationProviderClient(this)
+                            .requestLocationUpdates(locationRequest, new LocationCallback() {
+                                @Override
+                                public void onLocationResult(@NonNull LocationResult locationResult) {
+                                    super.onLocationResult(locationResult);
+
+                                    LocationServices.getFusedLocationProviderClient(JustEx.this)
+                                            .removeLocationUpdates(this);
+                                    if (locationResult != null && locationResult.getLocations().size() > 0) {
+                                        int index = locationResult.getLocations().size() - 1;
+                                        double lat = locationResult.getLocations().get(index).getLatitude();
+                                        double lng = locationResult.getLocations().get(index).getLongitude();
+                                        moveCamera(new LatLng(lat, lng), 17f, "I'm here");
+                                    }
+                                }
+                            }, Looper.getMainLooper());
+                } else {
+                    turnOnGPS();
+                }
+                mLocationPermissionGranted = true;
+                //Then initialise the map
+                initMap();
+            } else {
+                ActivityCompat.requestPermissions(this, permission, 101);
+            }
+        } else {
+            ActivityCompat.requestPermissions(this, permission, 100);
+        }
+    }
+
+    private void turnOnGPS() {
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true);
+
+        Task<LocationSettingsResponse> result = LocationServices.getSettingsClient(getApplicationContext())
+                .checkLocationSettings(builder.build());
+
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+
+                try {
+                    LocationSettingsResponse response = task.getResult(ApiException.class);
+                    Toast.makeText(JustEx.this, "GPS is already tured on", Toast.LENGTH_SHORT).show();
+
+                } catch (ApiException e) {
+
+                    switch (e.getStatusCode()) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+
+                            try {
+                                ResolvableApiException resolvableApiException = (ResolvableApiException) e;
+                                resolvableApiException.startResolutionForResult(JustEx.this, 2);
+                            } catch (IntentSender.SendIntentException ex) {
+                                ex.printStackTrace();
+                            }
+                            break;
+
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            //Device does not have location
+                            break;
+                    }
+                }
+            }
+        });
+    }
+
+    private boolean isGPSEnabled() {
+        LocationManager locationManager = null;
+        boolean isEnabled = false;
+        if (locationManager == null) {
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        }
+        isEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        return isEnabled;
     }
 
     //This fun is for clicking the items on the activity
@@ -113,7 +201,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
         binding.currentLocation.setOnClickListener(view ->
-                getDeviceLocation());
+                checkLocationPermission());
         binding.circleProfile.setOnClickListener(view ->
                 Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show());
     }
@@ -147,37 +235,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void getDeviceLocation() {
-        turnOnGPS();
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        try {
-            //If we have access to user location
-            if (mLocationPermissionGranted) {
-                final Task location = mFusedLocationProviderClient.getLastLocation();
-                location.addOnCompleteListener(new OnCompleteListener() {
-                    @Override
-                    public void onComplete(@NonNull Task task) {
-                        if (task.isSuccessful()) {
-                            Log.d(TAG, "onComplete: found location!");
-                            Location currentLocation = (Location) task.getResult();
-                            // We are moving the camera to 11.8f zoom
-                            if (currentLocation != null) {
-                                moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 17f, "You are here!");
-                            }
-
-                        } else {
-
-                            Toast.makeText(MapsActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-
-        } catch (SecurityException e) {
-            Log.e(TAG, "getDeviceLocation: SecurityException" + e.getMessage());
-        }
-    }
-
     private void moveCamera(LatLng latLng, Float zoom, String title) {
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 
@@ -203,23 +260,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
     }
 
-    private void getLocationPermission() {
-        String[] permission = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                    Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                //This is for if the user permitted for currentLocation
-                mLocationPermissionGranted = true;
-                //Then initialise the map
-                initMap();
-            } else {
-                ActivityCompat.requestPermissions(this, permission, LOCATION_PERMISSION_REQUEST_CODE);
-            }
-        } else {
-            ActivityCompat.requestPermissions(this, permission, LOCATION_PERMISSION_REQUEST_CODE);
-        }
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -294,43 +334,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         args.putString("getLatLng", latLng);
         bottomSheetFragment.setArguments(args);
         bottomSheetFragment.show(getSupportFragmentManager(), bottomSheetFragment.getTag());
-    }
-
-    private void turnOnGPS() {
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(locationRequest);
-        builder.setAlwaysShow(true);
-
-        Task<LocationSettingsResponse> result = LocationServices.getSettingsClient(getApplicationContext())
-                .checkLocationSettings(builder.build());
-
-        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-            @Override
-            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
-
-                try {
-                    LocationSettingsResponse response = task.getResult(ApiException.class);
-                    //Toast.makeText(MapsActivity.this, "GPS is already tured on", Toast.LENGTH_SHORT).show();
-
-                } catch (ApiException e) {
-
-                    switch (e.getStatusCode()) {
-                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-
-                            try {
-                                ResolvableApiException resolvableApiException = (ResolvableApiException) e;
-                                resolvableApiException.startResolutionForResult(MapsActivity.this, 2);
-                            } catch (IntentSender.SendIntentException ex) {
-                                ex.printStackTrace();
-                            }
-                            break;
-
-                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                            //Device does not have location
-                            break;
-                    }
-                }
-            }
-        });
     }
 }
