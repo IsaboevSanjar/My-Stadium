@@ -113,7 +113,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
         binding.currentLocation.setOnClickListener(view ->
-                getDeviceLocation());
+                turnOnGPS());
         binding.circleProfile.setOnClickListener(view ->
                 Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show());
     }
@@ -148,7 +148,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getDeviceLocation() {
-        turnOnGPS();
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         try {
             //If we have access to user location
@@ -320,6 +319,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             try {
                                 ResolvableApiException resolvableApiException = (ResolvableApiException) e;
                                 resolvableApiException.startResolutionForResult(MapsActivity.this, 2);
+                                getDeviceLocation();
                             } catch (IntentSender.SendIntentException ex) {
                                 ex.printStackTrace();
                             }
