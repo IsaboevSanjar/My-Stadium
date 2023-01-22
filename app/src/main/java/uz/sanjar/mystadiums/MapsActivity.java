@@ -11,7 +11,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -125,17 +128,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void clickingToDrawer() {
         binding.navView.bringToFront();
         binding.navView.setNavigationItemSelectedListener(MapsActivity.this);
-        binding.navView.setCheckedItem(R.id.home_menu);
     }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         //We are doing the clicking of each menu items!!!
         switch (item.getItemId()) {
-            case R.id.home_menu:
-                Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show();
-            case R.id.celebrities_menu:
-                Toast.makeText(this, "Celebrities", Toast.LENGTH_SHORT).show();
+            case R.id.favourites_menu:
+                Toast.makeText(this, "Favourites", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.history_menu:
+                Toast.makeText(this, "History", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.language_menu:
+                Toast.makeText(this, "Language", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.stadium_menu:
+                Toast.makeText(this, "My Stadium", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.privacy_menu:
+                Toast.makeText(this, "Privacy", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.log_out_menu:
+                Toast.makeText(this, "Log out", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.help_menu:
+                Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
+                break;
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START);
         return true;
@@ -367,5 +386,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        closeKeyboard();
+        return super.dispatchTouchEvent(ev);
+    }
 
+    private void closeKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager inp = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            inp.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
 }
