@@ -10,6 +10,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -40,6 +42,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.android.material.navigation.NavigationView;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,7 +50,7 @@ import java.util.List;
 
 import uz.sanjar.mystadiums.databinding.ActivityMapsBinding;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener, NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "MapsActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
@@ -116,6 +119,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 turnOnGPS());
         binding.circleProfile.setOnClickListener(view ->
                 binding.drawerLayout.open());
+        clickingToDrawer();
+    }
+
+    private void clickingToDrawer() {
+        binding.navView.bringToFront();
+        binding.navView.setNavigationItemSelectedListener(MapsActivity.this);
+        binding.navView.setCheckedItem(R.id.home_menu);
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        //We are doing the clicking of each menu items!!!
+        switch (item.getItemId()) {
+            case R.id.home_menu:
+                Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show();
+            case R.id.celebrities_menu:
+                Toast.makeText(this, "Celebrities", Toast.LENGTH_SHORT).show();
+        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
     }
 
     @SuppressLint("SetTextI18n")
@@ -334,4 +357,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
     }
+
+    @Override
+    public void onBackPressed() {
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+
 }
